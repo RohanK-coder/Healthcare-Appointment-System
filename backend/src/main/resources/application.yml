@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: healthcare-appointment-system
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/healthcare_appointments}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-to-at-least-32-characters-for-dev-only}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  reminders:
+    enabled: true
+    fixed-rate-ms: 60000
+
+logging:
+  level:
+    org.springframework.security: INFO
+    com.example.healthcare: INFO
