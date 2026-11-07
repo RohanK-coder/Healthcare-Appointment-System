@@ -17,8 +17,12 @@ export default function PatientDoctors() {
 
   async function loadSlots(doctorId) {
     setError('');
-    const { data } = await api.get(`/patient/doctors/${doctorId}/slots?availableOnly=true`);
-    setSlots((prev) => ({ ...prev, [doctorId]: data }));
+    try {
+      const { data } = await api.get(`/patient/doctors/${doctorId}/slots?availableOnly=true`);
+      setSlots((prev) => ({ ...prev, [doctorId]: data }));
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   async function book(slotId) {

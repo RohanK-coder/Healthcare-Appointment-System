@@ -1,0 +1,28 @@
+# Render Blueprint for the backend API. Database: use Neon (or Render Postgres) and set DB_* below.
+# Frontend: deploy frontend/ to Vercel with VITE_API_BASE_URL=https://<this-service>.onrender.com/api
+services:
+  - type: web
+    name: careslot-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod,demo
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_URL
+        sync: false   # jdbc:postgresql://<host>/<db>?sslmode=require
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        sync: false   # https://<your-app>.vercel.app
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: NOTIFICATION_CHANNEL
+        value: log    # switch to "email" once SMTP credentials are configured
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError"

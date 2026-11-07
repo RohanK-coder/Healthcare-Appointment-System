@@ -19,8 +19,9 @@ public class Appointment {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "slot_id", nullable = false, unique = true)
+    // Not unique: a canceled appointment releases its slot for rebooking (see uk_appointments_active_slot).
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "slot_id", nullable = false)
     private AppointmentSlot slot;
 
     @Enumerated(EnumType.STRING)

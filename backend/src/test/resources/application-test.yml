@@ -1,14 +1,26 @@
-spring:
-  datasource:
-    url: jdbc:h2:mem:healthcare_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  flyway:
-    enabled: true
+# Datasource comes from the Testcontainers PostgreSQL container (@ServiceConnection).
 app:
   jwt:
     secret: test-secret-must-be-at-least-32-characters-long
+  security:
+    bcrypt-strength: 4   # fast hashing in tests; production uses 12
+  rate-limit:
+    enabled: true
+    auth:
+      capacity: 10
+      window: PT1M
+    api:
+      capacity: 1000
+      window: PT1M
+  notifications:
+    scheduler-enabled: false   # tests drive the queue directly
+    channel: log
+    backoff-base: PT0S
+    backoff-max: PT0S
+    max-attempts: 3
+  seed:
+    demo-accounts: false
+logging:
+  level:
+    com.example.healthcare: WARN
+    org.testcontainers: WARN

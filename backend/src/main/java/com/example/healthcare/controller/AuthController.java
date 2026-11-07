@@ -29,6 +29,11 @@ public class AuthController {
         return authService.login(request);
     }
 
+    @PutMapping("/password")
+    public AuthResponse changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        return authService.changePassword(request);
+    }
+
     @GetMapping("/me")
     public UserResponse me() {
         AppUser user = currentUserService.currentUser();

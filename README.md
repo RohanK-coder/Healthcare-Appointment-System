@@ -1,188 +1,119 @@
-# Healthcare Appointment System
+# CareSlot: Healthcare Appointment System
 
-Full-stack three-portal healthcare appointment system built with Spring Boot, Spring Security JWT RBAC, PostgreSQL, Flyway, and React.
+![CI](https://github.com/RohanK-coder/Healthcare-Appointment-System/actions/workflows/ci.yml/badge.svg)
 
-## Features
+A full-stack appointment booking system with three role-based portals (patient, doctor, admin), built to
+show backend API design, PostgreSQL concurrency control, security controls, and reliable background
+processing.
 
-- Patient portal: browse doctors, view available slots, book/cancel appointments, view summaries.
-- Doctor portal: generate calendar-based availability slots, view appointments, complete visits, write summaries.
-- Admin portal: manage users/doctors, view all appointments, view dashboard reports.
-- Backend security: Spring Security, JWT authentication, role-based access control.
-- Database reliability: PostgreSQL schema managed by Flyway migrations.
-- Scheduling: background reminder processor marks upcoming booked appointments and creates notification records.
-- Double-booking protection: database unique constraint plus pessimistic row lock during appointment booking.
+> **Demo system with synthetic data.** CareSlot is a portfolio project. It is **not** a clinical product, is
+> **not** HIPAA compliant, and must not be used with real personal or health information. Every name, email
+> and visit note in the demo dataset is generated.
 
-## Project structure
+**Live demo:** _add link_ · **API docs:** _add link_/swagger-ui.html
 
-```txt
-healthcare-appointment-system/
-├── backend/                 # Spring Boot API
-├── frontend/                # React + Vite UI
-├── docker-compose.yml       # PostgreSQL + backend container
-└── README.md
-```
+## Highlights
 
-## Requirements
+- **No double bookings under concurrency.** A pessimistic row lock plus a partial unique index. In a load test,
+  2,000 concurrent attempts on 50 slots produced exactly 50 bookings, 1,950 clean `409`s, and no errors.
+- **Reliable reminders without a message broker.** PostgreSQL works as the job queue: `FOR UPDATE SKIP LOCKED`
+  workers, exponential backoff with jitter, dead-lettering, crash recovery, and an admin retry button.
+  Throughput: 2,275 jobs/s with 4 workers.
+- **Security.** JWT with role-based access and per-resource ownership checks, revocation on password change,
+  BCrypt cost 12, account lockout, per-IP rate limiting, strict input validation, and an append-only audit trail.
+- **Tested against real PostgreSQL.** 131 tests (109 integration tests on Testcontainers), including a 20-thread booking
+  race, a 72-case role × endpoint permission matrix, and queue failure scenarios. CI runs them on every push.
+- **Runs anywhere.** One `docker compose up` starts Postgres, the API, the frontend and a fake mail inbox.
+  Deployment guide for Render, Neon and Vercel.
 
-Install these before running locally:
+## Tech stack
 
-- Java 17+
-- Maven 3.9+
-- Node.js 18+
-- npm 9+
-- Docker Desktop, recommended for PostgreSQL
+| Layer | Technology |
+|---|---|
+| API | Java 21, Spring Boot 3.5, Spring Security, Spring Data JPA, Bean Validation |
+| Database | PostgreSQL 16, Flyway migrations |
+| Security | JWT (jjwt), BCrypt, Bucket4j rate limiting |
+| Background jobs | Spring scheduling + PostgreSQL queue (`SKIP LOCKED`), SMTP via Spring Mail |
+| Frontend | React 18, React Router, Vite, Axios |
+| Testing | JUnit 5, Testcontainers, MockMvc, k6 load tests |
+| Ops | Docker, Docker Compose, nginx, GitHub Actions, GHCR, Actuator/Micrometer, OpenAPI |
 
-## Demo accounts
-
-The backend seeds these accounts automatically on startup:
-
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@healthcare.local` | `password` |
-| Doctor | `doctor@healthcare.local` | `password` |
-| Patient | `patient@healthcare.local` | `password` |
-
-## Option 1: Run with Docker for database + local dev servers
-
-From the project root:
-
-```bash
-docker compose up -d postgres
-```
-
-Run the backend:
-
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-Run the frontend in a second terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open:
-
-```txt
-http://localhost:5173
-```
-
-Backend API base URL:
-
-```txt
-http://localhost:8080/api
-```
-
-## Option 2: Run backend with Docker Compose
-
-From the project root:
+## Quick start (Docker)
 
 ```bash
 docker compose up --build
 ```
 
-Then run the frontend separately:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173`.
-
-## Common workflow to test the app
-
-1. Login as `doctor@healthcare.local` / `password`.
-2. Go to **Manage Slots** and generate slots for tomorrow.
-3. Logout.
-4. Login as `patient@healthcare.local` / `password`.
-5. Go to **Find Doctors**, view available slots, and book one.
-6. Go to **My Appointments** to confirm it appears.
-7. Logout.
-8. Login as `doctor@healthcare.local` again.
-9. Go to **Appointments**, add a summary, and complete the appointment.
-10. Login as admin to view reports and all appointments.
-
-## Useful API examples
-
-Login:
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"patient@healthcare.local","password":"password"}'
-```
-
-Create doctor slots after logging in as a doctor:
-
-```bash
-curl -X POST http://localhost:8080/api/doctor/slots \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"date":"2026-07-02","startTime":"09:00","endTime":"12:00","durationMinutes":30}'
-```
-
-Book an appointment as a patient:
-
-```bash
-curl -X POST http://localhost:8080/api/patient/appointments \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"slotId":1,"reason":"Routine checkup"}'
-```
-
-## Backend commands
-
-```bash
-cd backend
-mvn spring-boot:run
-mvn test
-mvn clean package
-```
-
-## Frontend commands
-
-```bash
-cd frontend
-npm install
-npm run dev
-npm run build
-npm run preview
-```
-
-## Environment variables
-
-Backend:
-
-| Variable | Default |
+| URL | What |
 |---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/healthcare_appointments` |
-| `DB_USERNAME` | `postgres` |
-| `DB_PASSWORD` | `postgres` |
-| `JWT_SECRET` | Dev-only secret in `application.yml` |
-| `FRONTEND_URL` | `http://localhost:5173` |
+| http://localhost:3000 | App |
+| http://localhost:3000/swagger-ui.html | Interactive API docs |
+| http://localhost:8025 | Mailpit inbox (reminder emails land here; nothing is really sent) |
 
-Frontend:
+The `demo` profile seeds a synthetic dataset (12 doctors, 200 patients, ~3,300 slots, ~2,400 appointments).
 
-| Variable | Default |
+### Demo accounts
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@careslot.test` | `DemoPass123` |
+| Doctor | `doctor@careslot.test` | `DemoPass123` |
+| Patient | `patient@careslot.test` | `DemoPass123` |
+
+Synthetic users (`doctor01@doctors.careslot.test`, `patient001@patients.careslot.test`, …) use the same password.
+
+## Local development
+
+Requirements: Java 21+, Maven 3.9+, Node 18+, Docker.
+
+```bash
+docker compose up -d postgres                     # database only
+cd backend && mvn spring-boot:run                 # API on :8080 (add -Dspring-boot.run.profiles=demo for the dataset)
+cd frontend && npm install && npm run dev         # UI on :5173
+```
+
+## Tests
+
+```bash
+cd backend && mvn verify          # needs Docker running (Testcontainers starts PostgreSQL)
+```
+
+| Suite | What it proves |
 |---|---|
-| `VITE_API_BASE_URL` | `http://localhost:8080/api` |
+| `BookingConflictTest` | 20 simultaneous bookings for one slot → exactly 1 succeeds; cancel/rebook; repeated cancel can't free someone else's slot; past slots rejected |
+| `RolePermissionTest` | Every protected endpoint × {anonymous, patient, doctor, admin} → 401/403/allowed; cross-user (IDOR) checks; tampered and revoked tokens; sign-up can't create admins |
+| `AuthApiTest` | Validation errors, generic login failures, lockout after 5 tries, token revocation on password change, no password hashes in responses |
+| `AppointmentApiTest` | Slot generation rules (including the midnight regression), malformed input, full visit lifecycle, audit entries without clinical text |
+| `RateLimitTest` | 11th auth request per minute from one IP → 429 with `Retry-After`; other clients unaffected |
+| `ReminderQueueTest` | Idempotent enqueue, retry then success, dead-lettering and admin requeue, skipping canceled visits, 4 concurrent workers with no duplicate sends, crashed-worker recovery |
 
-## Notes for resume/project demo
+## Performance
 
-The system includes the foundations for the resume points:
+Measured on an Apple M4 laptop with everything in Docker. Full method and how to reproduce: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
-- Three portals: patient, doctor, admin.
-- Spring Security RBAC: route access is enforced by user role.
-- Calendar slot management: doctors generate slots by date/time/duration.
-- Automated reminders: scheduled service processes upcoming booked appointments and creates notification rows.
-- Flyway migrations: schema is versioned in `backend/src/main/resources/db/migration`.
-- Integration testing foundation: Spring Boot context test with H2 PostgreSQL mode.
+| Scenario | Result |
+|---|---|
+| 2,000 concurrent booking attempts on 50 slots (100 users) | 50 booked, 1,950 × 409, **0 errors, 0 double bookings**; p95 144 ms |
+| Mixed read traffic, 50 concurrent users, 60 s | 36,035 requests, **0 failures**, p95 **2.8 ms** |
+| Reminder queue, 5,000 jobs (excludes SMTP) | **913 jobs/s** with 1 worker, **2,275 jobs/s** with 4, 0 duplicates |
 
-To demonstrate processing speed for 500+ records, seed or create 500 upcoming booked appointments and inspect the `Processed X appointment reminders in Y ms` backend log emitted by `NotificationService`.
-# Healthcare-Appointment-System
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md): components, data model, booking and queue design, state machines
+- [Security](docs/SECURITY.md): each control, why it was chosen, trade-offs, known gaps
+- [API](docs/API.md): endpoints, error format, examples (plus Swagger UI)
+- [Performance](docs/PERFORMANCE.md): load test method and results
+- [Deployment](docs/DEPLOYMENT.md): Neon + Render + Vercel walkthrough
+
+## Project structure
+
+```
+├── backend/            Spring Boot API (config, security, controller, service, notification, repository, seed)
+│   └── src/test/       Testcontainers integration tests + queue benchmark
+├── frontend/           React SPA + nginx config
+├── perf/               k6 load test scripts
+├── docs/               Architecture, security, API, performance, deployment
+├── docker-compose.yml  Postgres + API + frontend + Mailpit
+├── render.yaml         Render blueprint for the API
+└── .github/workflows/  CI: tests, build, container images
+```

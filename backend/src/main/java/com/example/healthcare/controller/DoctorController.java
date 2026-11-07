@@ -37,7 +37,7 @@ public class DoctorController {
 
     @PostMapping("/appointments/{appointmentId}/summary")
     public AppointmentResponse addSummary(@PathVariable Long appointmentId,
-                                          @RequestBody CreateSummaryRequest request) {
+                                          @Valid @RequestBody CreateSummaryRequest request) {
         return appointmentService.addSummary(appointmentId, request);
     }
 }

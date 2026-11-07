@@ -1,5 +1,6 @@
 package com.example.healthcare.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,10 +34,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         try {
-            String email = jwtService.extractUsername(token);
+            Claims claims = jwtService.parse(token);
+            String email = claims.getSubject();
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserPrincipal principal = (UserPrincipal) userDetailsService.loadUserByUsername(email);
-                if (jwtService.isTokenValid(token, principal)) {
+                if (jwtService.isTokenValid(claims, principal)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             principal, null, principal.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -44,6 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception ignored) {
+            // Invalid, expired or revoked token: continue unauthenticated; protected routes return 401.
             SecurityContextHolder.clearContext();
         }
 
