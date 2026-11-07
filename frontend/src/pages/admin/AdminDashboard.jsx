@@ -26,6 +26,16 @@ export default function AdminDashboard() {
           <div className="stat-card" key={label}><span>{label}</span><strong>{value}</strong></div>
         ))}
       </section>
+      {report && (
+        <section className="card">
+          <h2>Reminder queue</h2>
+          <div className="stats-grid compact">
+            {Object.entries(report.notificationsByStatus).map(([label, value]) => (
+              <div className="stat-card" key={label}><span>{label}</span><strong>{value}</strong></div>
+            ))}
+          </div>
+        </section>
+      )}
     </PortalLayout>
   );
 }

@@ -1,4 +1,4 @@
-export default function AppointmentTable({ appointments, onCancel, onComplete }) {
+export default function AppointmentTable({ appointments, onCancel, onComplete, onNoShow }) {
   if (!appointments?.length) return <div className="empty">No appointments found.</div>;
 
   return (
@@ -27,6 +27,7 @@ export default function AppointmentTable({ appointments, onCancel, onComplete })
               <td className="actions">
                 {onCancel && a.status === 'BOOKED' && <button className="danger" onClick={() => onCancel(a.id)}>Cancel</button>}
                 {onComplete && a.status === 'BOOKED' && <button onClick={() => onComplete(a.id)}>Complete</button>}
+                {onNoShow && a.status === 'BOOKED' && <button className="secondary" onClick={() => onNoShow(a.id)}>No-show</button>}
               </td>
             </tr>
           ))}

@@ -13,6 +13,9 @@ import DoctorAppointments from './pages/doctor/DoctorAppointments.jsx';
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
 import AdminAppointments from './pages/admin/AdminAppointments.jsx';
+import AdminAudit from './pages/admin/AdminAudit.jsx';
+import AdminNotifications from './pages/admin/AdminNotifications.jsx';
+import Account from './pages/Account.jsx';
 
 export default function App() {
   const { loading } = useAuth();
@@ -43,6 +46,12 @@ export default function App() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="appointments" element={<AdminAppointments />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="audit" element={<AdminAudit />} />
+      </Route>
+
+      <Route path="/account" element={<ProtectedRoute />}>
+        <Route index element={<Account />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

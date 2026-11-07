@@ -29,6 +29,16 @@ export default function DoctorAppointments() {
     }
   }
 
+  async function noShow(id) {
+    setError('');
+    try {
+      await api.put(`/doctor/appointments/${id}/status`, { status: 'NO_SHOW' });
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   return (
     <PortalLayout title="Appointments">
       {error && <div className="alert">{error}</div>}
@@ -37,7 +47,7 @@ export default function DoctorAppointments() {
         <label>Prescription<input value={summary.prescription} onChange={(e) => setSummary({ ...summary, prescription: e.target.value })} /></label>
         <label className="span-all">Doctor notes<textarea value={summary.doctorNotes} onChange={(e) => setSummary({ ...summary, doctorNotes: e.target.value })} /></label>
       </section>
-      <AppointmentTable appointments={appointments} onComplete={complete} />
+      <AppointmentTable appointments={appointments} onComplete={complete} onNoShow={noShow} />
     </PortalLayout>
   );
 }

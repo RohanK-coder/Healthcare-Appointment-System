@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../state/AuthContext.jsx';
+import DemoBanner from './DemoBanner.jsx';
 
 const links = {
   PATIENT: [
@@ -15,7 +16,9 @@ const links = {
   ADMIN: [
     ['Dashboard', '/admin/dashboard'],
     ['Users', '/admin/users'],
-    ['Appointments', '/admin/appointments']
+    ['Appointments', '/admin/appointments'],
+    ['Reminder Queue', '/admin/notifications'],
+    ['Audit Log', '/admin/audit']
   ]
 };
 
@@ -37,10 +40,12 @@ export default function PortalLayout({ children, title }) {
           {(links[user?.role] || []).map(([label, href]) => (
             <NavLink key={href} to={href}>{label}</NavLink>
           ))}
+          <NavLink to="/account">Account</NavLink>
         </nav>
         <button className="secondary full" onClick={handleLogout}>Logout</button>
       </aside>
       <main className="portal-main">
+        <DemoBanner />
         <header className="page-header">
           <div>
             <p className="muted">Welcome, {user?.fullName}</p>
