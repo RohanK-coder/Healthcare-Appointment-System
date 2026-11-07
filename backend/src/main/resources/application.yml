@@ -1,5 +1,9 @@
 server:
   port: ${PORT:8080}
+  # Honors X-Forwarded-For only from private-network proxies (Tomcat RemoteIpValve defaults),
+  # so rate limiting and audit logs see the real client IP behind nginx / a PaaS load balancer.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}
+  shutdown: graceful
 
 spring:
   application:
@@ -8,6 +12,8 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/healthcare_appointments}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -15,20 +21,70 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        jdbc:
-          time_zone: UTC
   flyway:
     enabled: true
     locations: classpath:db/migration
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
 
 app:
+  # Slot times are wall-clock times in this zone; all "now" comparisons use it.
+  clinic-zone: ${CLINIC_ZONE:UTC}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173,http://localhost:3000}
   jwt:
     secret: ${JWT_SECRET:change-this-secret-to-at-least-32-characters-for-dev-only}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
-  frontend-url: ${FRONTEND_URL:http://localhost:5173}
-  reminders:
-    enabled: true
-    fixed-rate-ms: 60000
+    expiration-ms: ${JWT_EXPIRATION_MS:28800000}
+  security:
+    bcrypt-strength: ${BCRYPT_STRENGTH:12}
+    max-failed-logins: 5
+    lockout-duration: PT15M
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    auth:
+      capacity: ${RATE_LIMIT_AUTH_PER_MINUTE:10}
+      window: PT1M
+    api:
+      capacity: ${RATE_LIMIT_API_PER_MINUTE:300}
+      window: PT1M
+  notifications:
+    scheduler-enabled: ${REMINDERS_ENABLED:true}
+    channel: ${NOTIFICATION_CHANNEL:log}
+    from-address: ${MAIL_FROM:reminders@careslot.test}
+    enqueue-interval: PT1M
+    poll-interval: PT5S
+    reminder-horizon: PT24H
+    batch-size: 50
+    max-attempts: 5
+    backoff-base: PT30S
+    backoff-max: PT30M
+    lease-timeout: PT5M
+  seed:
+    demo-accounts: ${SEED_DEMO_ACCOUNTS:true}
+
+management:
+  health:
+    # SMTP outages are absorbed by the retry queue; they must not mark the app unhealthy.
+    mail:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    operations-sorter: method
+    tags-sorter: alpha
 
 logging:
   level:

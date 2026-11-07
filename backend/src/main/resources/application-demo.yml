@@ -1,0 +1,9 @@
+# Generates a synthetic dataset (doctors, patients, slots, appointment history) on first start.
+app:
+  seed:
+    demo-accounts: true
+    synthetic:
+      doctors: ${SEED_DOCTORS:12}
+      patients: ${SEED_PATIENTS:200}
+      days-ahead: ${SEED_DAYS_AHEAD:14}
+      days-history: ${SEED_DAYS_HISTORY:30}

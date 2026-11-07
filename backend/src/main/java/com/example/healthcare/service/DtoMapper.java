@@ -53,4 +53,20 @@ public final class DtoMapper {
                 summaryResponse
         );
     }
+
+    public static AdminUserResponse adminUser(AppUser user) {
+        return new AdminUserResponse(user.getId(), user.getFullName(), user.getEmail(), user.getRole(), user.isActive());
+    }
+
+    public static AuditLogResponse auditLog(AuditLog log) {
+        return new AuditLogResponse(log.getId(), log.getOccurredAt(), log.getActorUserId(), log.getActorEmail(),
+                log.getActorRole(), log.getAction(), log.getEntityType(), log.getEntityId(),
+                log.getOutcome().name(), log.getIpAddress(), log.getDetails());
+    }
+
+    public static NotificationResponse notification(Notification n) {
+        return new NotificationResponse(n.getId(), n.getAppointment().getId(), n.getRecipientUser().getEmail(),
+                n.getType().name(), n.getMessage(), n.getStatus(), n.getAttempts(), n.getNextAttemptAt(),
+                n.getSentAt(), n.getLastError(), n.getCreatedAt());
+    }
 }

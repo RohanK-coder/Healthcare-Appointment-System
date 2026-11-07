@@ -1,0 +1,12 @@
+# Production-like settings for the hosted demo. JwtService refuses to start with the dev secret here.
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+springdoc:
+  swagger-ui:
+    try-it-out-enabled: true
+logging:
+  level:
+    com.example.healthcare: INFO
